@@ -315,7 +315,11 @@ class mochaPlugin {
             });
 
             if (myModule.options.exitoncomplete) {
-              runner.on('end', () => process.exit());
+              let runnerFailures = 0;
+              runner.on('fail', () => {
+                runnerFailures++;
+              });
+              runner.on('end', () => process.exit(runnerFailures));
             }
 
             return null;
