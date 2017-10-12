@@ -290,7 +290,11 @@ class mochaPlugin {
                 if (mod[0] === '.') {
                   mod = path.join(process.cwd(), mod);
                 }
-                require(mod); // eslint-disable-line global-require
+                if (mod === 'babel-register') {
+                  require(mod)({ ignore: /node_modules\/(?!js_test_lib)/ }); // eslint-disable-line global-require
+                } else {
+                  require(mod); // eslint-disable-line global-require
+                }
                 extensions.push(ext);
               });
             }
