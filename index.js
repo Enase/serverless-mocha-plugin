@@ -291,7 +291,8 @@ class mochaPlugin {
                   mod = path.join(process.cwd(), mod);
                 }
                 if (mod === 'babel-register') {
-                  require(mod)({ ignore: /node_modules\/(?!js_test_lib)/ }); // eslint-disable-line global-require
+                  const babelConf = { ignore: /node_modules\/(?!js_test_lib)/ };
+                  require(mod)(babelConf); // eslint-disable-line global-require
                 } else {
                   require(mod); // eslint-disable-line global-require
                 }
