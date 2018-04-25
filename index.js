@@ -292,7 +292,7 @@ class mochaPlugin {
                   mod = path.join(process.cwd(), mod);
                 }
                 if (mod === 'babel-register') {
-                  const babelConf = { ignore: /node_modules\/(?!js_test_lib)/ };
+                  const babelConf = ((this.serverless.service.custom || {})['serverless-offline'] || {}).babelOptions; // eslint-disable-line max-len
                   require(mod)(babelConf); // eslint-disable-line global-require
                 } else {
                   require(mod); // eslint-disable-line global-require
