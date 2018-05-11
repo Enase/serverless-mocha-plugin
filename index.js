@@ -302,7 +302,7 @@ class mochaPlugin {
               });
             }
 
-            mocha.run((failures) => {
+            const runner = mocha.run((failures) => {
               process.on('exit', () => {
                 myModule.runScripts('postTestCommands')
                 // exit with non-zero status if there were failures
