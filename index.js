@@ -118,8 +118,8 @@ class mochaPlugin {
               compilers: {
                 usage: 'Compiler to use on Mocha',
               },
-              exitoncomplete: {
-                usage: 'Force process exit on mocha runner "end" event',
+              exit: {
+                usage: 'force shutdown of the event loop after test run',
               },
             },
           },
@@ -302,7 +302,7 @@ class mochaPlugin {
               });
             }
 
-            const runner = mocha.run((failures) => {
+            const mochaRunner = mocha.run((failures) => {
               process.on('exit', () => {
                 myModule.runScripts('postTestCommands')
                 // exit with non-zero status if there were failures
@@ -318,12 +318,8 @@ class mochaPlugin {
               }
             });
 
-            if (myModule.options.exitoncomplete) {
-              let runnerFailures = 0;
-              runner.on('fail', () => {
-                runnerFailures++;
-              });
-              runner.on('end', () => process.exit(runnerFailures));
+            if (myModule.options.exit) {
+              mochaRunner.on('end', process.exit);
             }
 
             return null;
