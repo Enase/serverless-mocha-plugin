@@ -128,19 +128,13 @@ class mochaPlugin {
     };
 
     this.hooks = {
-      'create:test:test': () => {
-        BbPromise.bind(this)
-          .then(this.createTest);
-      },
-      'invoke:test:test': () => {
-        BbPromise.bind(this)
-          .then(this.runTests);
-      },
-      'create:function:create': () => {
-        BbPromise.bind(this)
+      'create:test:test': () => BbPromise.bind(this)
+          .then(this.createTest),
+      'invoke:test:test': () => BbPromise.bind(this)
+          .then(this.runTests),
+      'create:function:create': () => BbPromise.bind(this)
           .then(this.createFunction)
-          .then(this.createTest);
-      },
+          .then(this.createTest),
     };
   }
 
@@ -179,7 +173,7 @@ class mochaPlugin {
     } else if (funcOption.length > 0) {
       funcNames = funcOption;
     }
-    this.serverless.service.load({
+    return this.serverless.service.load({
       stage,
       region,
     })
@@ -203,7 +197,7 @@ class mochaPlugin {
 
         myModule.serverless.environment = inited.environment;
         const vars = new myModule.serverless.classes.Variables(myModule.serverless);
-        vars.populateService(this.options)
+        return vars.populateService(this.options)
           .then(() => myModule.runScripts('preTestCommands'))
           .then(() => myModule.getFunctions(funcNames))
           .then((funcs) => utils.getTestFiles(funcs, testsPath, funcNames))
@@ -302,27 +296,36 @@ class mochaPlugin {
               });
             }
 
-            const mochaRunner = mocha.run((failures) => {
-              process.on('exit', () => {
-                myModule.runScripts('postTestCommands')
-                // exit with non-zero status if there were failures
-                  .then(() => process.exit(failures));
+            return new BbPromise((resolve) => {
+              const mochaRunner = mocha.run((failures) => {
+                process.on('exit', () => {
+                  myModule.runScripts('postTestCommands')
+                  // exit with non-zero status if there were failures
+                    .then(() => process.exit(failures));
+                });
+              }).on('test', (suite) => {
+                const testFuncName = utils.funcNameFromPath(suite.file);
+                  // set env only for functions
+                if (testFileMap[testFuncName]) {
+                  utils.setEnv(myModule.serverless, testFuncName);
+                } else {
+                  utils.setEnv(myModule.serverless);
+                }
               });
-            }).on('test', (suite) => {
-              const testFuncName = utils.funcNameFromPath(suite.file);
-                // set env only for functions
-              if (testFileMap[testFuncName]) {
-                utils.setEnv(myModule.serverless, testFuncName);
-              } else {
-                utils.setEnv(myModule.serverless);
+
+              let runnerFailures = 0;
+              if (myModule.options.exit) {
+                mochaRunner.on('fail', () => {
+                  runnerFailures++;
+                });
               }
+              mochaRunner.on('end', () => {
+                if (myModule.options.exit) {
+                  process.exit(runnerFailures);
+                }
+                resolve();
+              });
             });
-
-            if (myModule.options.exit) {
-              mochaRunner.on('end', process.exit);
-            }
-
-            return null;
           }, error => myModule.serverless.cli.log(error));
       });
   }
