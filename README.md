@@ -180,6 +180,10 @@ Sample stopOffline.sh
 kill `cat .offline.pid`
 rm .offline.pid
 ```
+
+### Add custom babel configuration
+
+
 ## Release History (1.x)
 
 * 2018/12/15 - v1.9.1 - fix to work with serverless 1.33 and later
