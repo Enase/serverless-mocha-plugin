@@ -1,6 +1,5 @@
 'use strict';
 
-const BbPromise = require('bluebird');
 const path = require('path');
 const fs = require('fs');
 
@@ -36,46 +35,35 @@ function traverseTestFolder(testFolder, prefix) {
 
 // getTestFiles. Returns all test files, attaches to functions
 function getTestFiles(funcs, testFolder, funcList) {
-  return new BbPromise((resolve) => {
-    const funcFiles = traverseTestFolder(testFolder);
-    if (funcFiles.length > 0) {
-      const resFuncs = {};
-      funcFiles.forEach((val) => {
-        if (path.extname(val) === '.js') {
-          const base = path.basename(val).replace(/.js$/, '');
-          // Create test for non-functions only if no funcList
-          if (funcs[base] || funcList.length === 0) {
-            resFuncs[base] = funcs[base] || { };
+  const funcFiles = traverseTestFolder(testFolder);
+  const resFuncs = {};
+  if (funcFiles.length > 0) {
+    funcFiles.forEach((val) => {
+      if (path.extname(val) === '.js') {
+        const base = path.basename(val).replace(/.js$/, '');
+        // Create test for non-functions only if no funcList
+        if (funcs[base] || funcList.length === 0) {
+          resFuncs[base] = funcs[base] || { };
 
-            resFuncs[base].mochaPlugin = {
-              testPath: path.join(getTestsFolder(testFolder), val),
-            };
-          }
+          resFuncs[base].mochaPlugin = {
+            testPath: path.join(getTestsFolder(testFolder), val),
+          };
         }
-      });
-      return resolve(resFuncs);
-    }
-    return resolve({});
-  });
+      }
+    });
+  }
+  return resFuncs;
 }
 
 // Create the test folder
 function createTestFolder(testsRootFolder) {
-  return new BbPromise((resolve, reject) => {
-    const testsFolder = getTestsFolder(testsRootFolder);
-    fs.exists(testsFolder, (exists) => {
-      if (exists) {
-        return resolve(testsFolder);
-      }
-      fs.mkdir(testsFolder, (err) => {
-        if (err) {
-          return reject(err);
-        }
-        return resolve(testsFolder);
-      });
-      return null;
-    });
-  });
+  const testsFolder = getTestsFolder(testsRootFolder);
+  const exists = fs.existsSync(testsFolder);
+  if (exists) {
+    return testsFolder;
+  }
+  fs.mkdirSync(testsFolder);
+  return testsFolder;
 }
 
 function getTemplateFromFile(templateFilenamePath) {
