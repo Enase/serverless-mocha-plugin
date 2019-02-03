@@ -295,6 +295,7 @@ class mochaPlugin {
           }
           return null;
         }, error => myModule.serverless.cli.log(error));
+        let runnerFailures = 0;
         mocha.run((failures) => {
           process.on('exit', () => {
             myModule.runScripts('postTestCommands')
@@ -309,10 +310,12 @@ class mochaPlugin {
           } else {
             utils.setEnv(myModule.serverless);
           }
+        }).on('fail', () => {
+          runnerFailures++;
         }).on('end', () => {
           resolve();
           if (myModule.options.exit) {
-            process.exit();
+            process.exit(runnerFailures > 0 ? 1 : 0);
           }
         });
         return null;
