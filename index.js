@@ -120,6 +120,10 @@ class mochaPlugin {
               compilers: {
                 usage: 'Compiler to use on Mocha',
               },
+              timeout: {
+                usage: 'Timeout to wait for Mocha',
+                shortcut: 't',
+              },
               exit: {
                 usage: 'force shutdown of the event loop after test run',
               },
@@ -162,7 +166,7 @@ class mochaPlugin {
       const testsPath = this.options.p || this.options.path || utils.getTestsFolder();
       const testFileMap = {};
       const mocha = new Mocha({
-        timeout: 6000,
+        timeout: this.options.t || this.options.timeout || 6000,
       });
 
       const stage = this.options.stage;
@@ -302,6 +306,9 @@ class mochaPlugin {
             // exit with non-zero status if there were failures
               .then(() => process.exit(failures));
           });
+          if (myModule.options.exit) {
+            process.exit(failures);
+          }
         }).on('test', (suite) => {
           const testFuncName = utils.funcNameFromPath(suite.file);
             // set env only for functions
